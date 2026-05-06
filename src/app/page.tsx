@@ -342,6 +342,7 @@ export default function Home() {
           onSave={handleSaveNote}
           onGenerateAI={generateAI}
           onCaptureImage={captureImage}
+          onUploadPDF={uploadPDF}
         />
       )}
     </div>

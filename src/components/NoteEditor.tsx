@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { Note } from "@/types/note";
 import { X, Save, Sparkles, Loader2, Plus, Tag as TagIcon, Camera, Mic, MicOff, Download, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 
 interface NoteEditorProps {
   note: Note | null;
