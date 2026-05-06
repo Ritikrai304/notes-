@@ -2,6 +2,7 @@ import { Note } from "@/types/note";
 import { formatDate } from "@/lib/utils";
 import { Trash2, Tag, Calendar, Sparkles, Pin, PinOff } from "lucide-react";
 import { motion } from "framer-motion";
+import ReactMarkdown from "react-markdown";
 
 interface NoteCardProps {
   note: Note;
@@ -53,9 +54,11 @@ export default function NoteCard({ note, onDelete, onPin, onClick }: NoteCardPro
         </div>
       </div>
 
-      <p className="line-clamp-3 text-sm text-zinc-600 dark:text-zinc-400">
-        {note.content || "No content..."}
-      </p>
+      <div className="flex-1 overflow-hidden">
+        <div className="prose prose-sm dark:prose-invert line-clamp-3 text-zinc-600 dark:text-zinc-400">
+          <ReactMarkdown>{note.content || "No content..."}</ReactMarkdown>
+        </div>
+      </div>
 
       {note.summary && (
         <div className="mt-2 rounded-lg bg-indigo-50 p-3 dark:bg-indigo-950/30">
