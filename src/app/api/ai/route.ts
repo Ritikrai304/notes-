@@ -15,10 +15,9 @@ export async function POST(req: Request) {
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ 
-      model: "gemini-flash-latest",
-      generationConfig: { responseMimeType: "application/json" }
-    });
+    
+    // Switching to gemini-1.5-flash as it has a separate free tier quota
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
     const prompt = `
       Analyze the following note content and provide:
@@ -59,8 +58,19 @@ export async function POST(req: Request) {
     return NextResponse.json(data);
   } catch (error: any) {
     console.error("FULL AI ERROR:", error);
+    let errorMessage = error.message || "Failed to generate AI content";
+    
+    // Check for specific Gemini errors
+    if (errorMessage.includes("API_KEY_INVALID")) {
+      errorMessage = "Invalid Gemini API Key. Please check your .env.local file.";
+    } else if (errorMessage.includes("429") || errorMessage.includes("QUOTA_EXCEEDED")) {
+      errorMessage = "API Limit (Quota) khatam ho gayi hai. Please 30-60 seconds baad dobara try karein.";
+    } else if (errorMessage.includes("PERMISSION_DENIED") && errorMessage.includes("leaked")) {
+      errorMessage = "Ye API Key leak ho chuki hai aur Google ne ise block kar diya hai. Nayi key use karein.";
+    }
+
     return NextResponse.json({ 
-      error: "Failed to generate AI content", 
+      error: errorMessage,
       details: error.message 
     }, { status: 500 });
   }
