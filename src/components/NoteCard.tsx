@@ -23,7 +23,7 @@ export default function NoteCard({ note, onDelete, onClick }: NoteCardProps) {
             e.stopPropagation();
             onDelete(note.id);
           }}
-          className="rounded-lg p-1.5 text-zinc-400 opacity-0 transition-opacity hover:bg-red-50 hover:text-red-500 group-hover:opacity-100 dark:hover:bg-red-950"
+          className="rounded-lg p-1.5 text-zinc-400 transition-opacity hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-950"
         >
           <Trash2 size={18} />
         </button>
