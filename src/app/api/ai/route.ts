@@ -9,10 +9,10 @@ export async function POST(req: Request) {
   }
 
   try {
-    const { content, image } = await req.json();
+    const { content, image, pdf } = await req.json();
     
-    if (!content && !image) {
-      return NextResponse.json({ error: "No content or image provided" }, { status: 400 });
+    if (!content && !image && !pdf) {
+      return NextResponse.json({ error: "No content, image or pdf provided" }, { status: 400 });
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
@@ -29,10 +29,20 @@ export async function POST(req: Request) {
       const imageData = {
         inlineData: {
           data: image.split(",")[1], // Remove the data:image/png;base64, part
-          mimeType: "image/jpeg" // Default to jpeg, but ideally should match source
+          mimeType: "image/jpeg"
         }
       };
       result = await model.generateContent([prompt, imageData]);
+    } else if (pdf) {
+      // PDF request
+      prompt = "Extract all text from this PDF clearly and accurately. If there are headings, preserve them. Just return the extracted text.";
+      const pdfData = {
+        inlineData: {
+          data: pdf.split(",")[1],
+          mimeType: "application/pdf"
+        }
+      };
+      result = await model.generateContent([prompt, pdfData]);
     } else {
       // Text processing request
       prompt = `
@@ -55,8 +65,8 @@ export async function POST(req: Request) {
     const response = await result.response;
     const text = response.text();
 
-    if (image) {
-      // For image, we just return the extracted text
+    if (image || pdf) {
+      // For image or pdf, we just return the extracted text
       return NextResponse.json({ extractedText: text });
     }
     

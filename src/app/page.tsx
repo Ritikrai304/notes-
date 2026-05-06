@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Note } from "@/types/note";
+import { cn } from "@/lib/utils";
 import NoteList from "@/components/NoteList";
 import NoteEditor from "@/components/NoteEditor";
 import { Plus, Sparkles, Layout, Clock, Star, Settings, User, LogOut, Menu, X, BookOpen, BrainCircuit } from "lucide-react";
@@ -128,6 +129,28 @@ export default function Home() {
     } catch (error: any) {
       console.error("Vision Error:", error);
       alert(`Vision Error: ${error.message}. Please check your API key and internet connection.`);
+      throw error;
+    }
+  };
+
+  const uploadPDF = async (pdf: string) => {
+    try {
+      const response = await fetch("/api/ai", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pdf }),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "PDF processing failed");
+      }
+      
+      const data = await response.json();
+      return data.extractedText;
+    } catch (error: any) {
+      console.error("PDF Error:", error);
+      alert(`PDF Error: ${error.message}. Please check your API key and internet connection.`);
       throw error;
     }
   };

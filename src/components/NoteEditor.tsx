@@ -2,10 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { Note } from "@/types/note";
-import { X, Save, Sparkles, Loader2, Plus, Tag as TagIcon, Camera, Mic, MicOff, Download } from "lucide-react";
+import { X, Save, Sparkles, Loader2, Plus, Tag as TagIcon, Camera, Mic, MicOff, Download, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
-import jsPDF from "jspdf";
-import html2canvas from "html2canvas";
 
 interface NoteEditorProps {
   note: Note | null;
@@ -13,6 +11,7 @@ interface NoteEditorProps {
   onClose: () => void;
   onGenerateAI: (content: string) => Promise<{ summary: string; tags: string[] }>;
   onCaptureImage: (base64Image: string) => Promise<string>;
+  onUploadPDF: (base64PDF: string) => Promise<string>;
 }
 
 export default function NoteEditor({
@@ -21,6 +20,7 @@ export default function NoteEditor({
   onClose,
   onGenerateAI,
   onCaptureImage,
+  onUploadPDF,
 }: NoteEditorProps) {
   const [title, setTitle] = useState(note?.title || "");
   const [content, setContent] = useState(note?.content || "");
@@ -30,6 +30,7 @@ export default function NoteEditor({
   const [isCapturing, setIsCapturing] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const [isUploadingPDF, setIsUploadingPDF] = useState(false);
 
   useEffect(() => {
     if (note) {
@@ -155,6 +156,34 @@ export default function NoteEditor({
     }, 15000);
   };
 
+  const handlePDFUpload = () => {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "application/pdf";
+    input.onchange = async (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+
+      setIsUploadingPDF(true);
+      const reader = new FileReader();
+      reader.onload = async () => {
+        try {
+          const base64PDF = reader.result as string;
+          const extractedText = await onUploadPDF(base64PDF);
+          if (extractedText) {
+            setContent((prev) => (prev ? `${prev}\n\n${extractedText}` : extractedText));
+          }
+        } catch (error) {
+          console.error("Failed to extract PDF text:", error);
+        } finally {
+          setIsUploadingPDF(false);
+        }
+      };
+      reader.readAsDataURL(file);
+    };
+    input.click();
+  };
+
   const handleExportPDF = async () => {
     const element = document.getElementById("note-content-to-export");
     if (!element) return;
@@ -258,7 +287,7 @@ export default function NoteEditor({
 
             <button
               onClick={handleCameraClick}
-              disabled={isCapturing || isGenerating || isListening}
+              disabled={isCapturing || isGenerating || isListening || isUploadingPDF}
               className="flex items-center gap-2 rounded-xl bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-600 transition-colors hover:bg-emerald-100 disabled:opacity-50 dark:bg-emerald-950/30 dark:text-emerald-400"
             >
               {isCapturing ? (
@@ -270,8 +299,21 @@ export default function NoteEditor({
             </button>
 
             <button
+              onClick={handlePDFUpload}
+              disabled={isUploadingPDF || isGenerating || isListening || isCapturing}
+              className="flex items-center gap-2 rounded-xl bg-purple-50 px-4 py-2 text-sm font-semibold text-purple-600 transition-colors hover:bg-purple-100 disabled:opacity-50 dark:bg-purple-950/30 dark:text-purple-400"
+            >
+              {isUploadingPDF ? (
+                <Loader2 size={18} className="animate-spin" />
+              ) : (
+                <FileText size={18} />
+              )}
+              Upload PDF
+            </button>
+
+            <button
               onClick={toggleListening}
-              disabled={isGenerating || isCapturing}
+              disabled={isGenerating || isCapturing || isUploadingPDF}
               className={cn(
                 "flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition-all",
                 isListening 
