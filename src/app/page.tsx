@@ -14,6 +14,7 @@ export default function Home() {
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [activeFilter, setActiveFilter] = useState<"all" | "favorites" | "recent" | "dashboard">("dashboard");
 
   const stats = {
     total: notes.length,
@@ -21,6 +22,12 @@ export default function Home() {
     tags: Array.from(new Set(notes.flatMap(n => n.tags))).length,
     recent: notes.filter(n => (Date.now() - n.updatedAt) < 86400000).length
   };
+
+  const filteredNotes = notes.filter(note => {
+    if (activeFilter === "favorites") return note.isPinned;
+    if (activeFilter === "recent") return (Date.now() - note.updatedAt) < 86400000;
+    return true; // "all" or "dashboard" shows all notes
+  });
 
   // Load notes from localStorage on mount
   useEffect(() => {
@@ -181,16 +188,48 @@ export default function Home() {
           </div>
 
           <nav className="flex-1 space-y-2">
-            <button className="flex w-full items-center gap-3 rounded-xl bg-indigo-50 px-4 py-3 text-sm font-bold text-indigo-600 dark:bg-indigo-950/30 dark:text-indigo-400">
+            <button 
+              onClick={() => setActiveFilter("dashboard")}
+              className={cn(
+                "flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm transition-all",
+                activeFilter === "dashboard" 
+                  ? "bg-indigo-50 font-bold text-indigo-600 dark:bg-indigo-950/30 dark:text-indigo-400" 
+                  : "font-semibold text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+              )}
+            >
               <Layout size={20} /> Dashboard
             </button>
-            <button className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors">
+            <button 
+              onClick={() => setActiveFilter("all")}
+              className={cn(
+                "flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm transition-all",
+                activeFilter === "all" 
+                  ? "bg-indigo-50 font-bold text-indigo-600 dark:bg-indigo-950/30 dark:text-indigo-400" 
+                  : "font-semibold text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+              )}
+            >
               <BookOpen size={20} /> All Notes
             </button>
-            <button className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors">
+            <button 
+              onClick={() => setActiveFilter("favorites")}
+              className={cn(
+                "flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm transition-all",
+                activeFilter === "favorites" 
+                  ? "bg-indigo-50 font-bold text-indigo-600 dark:bg-indigo-950/30 dark:text-indigo-400" 
+                  : "font-semibold text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+              )}
+            >
               <Star size={20} /> Favorites
             </button>
-            <button className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors">
+            <button 
+              onClick={() => setActiveFilter("recent")}
+              className={cn(
+                "flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm transition-all",
+                activeFilter === "recent" 
+                  ? "bg-indigo-50 font-bold text-indigo-600 dark:bg-indigo-950/30 dark:text-indigo-400" 
+                  : "font-semibold text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+              )}
+            >
               <Clock size={20} /> Recent
             </button>
           </nav>
@@ -248,17 +287,21 @@ export default function Home() {
 
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
               {[
-                { label: "Total Notes", value: stats.total, icon: BookOpen, color: "blue" },
-                { label: "Pinned", value: stats.pinned, icon: Star, color: "amber" },
-                { label: "AI Tags", value: stats.tags, icon: Sparkles, color: "purple" },
-                { label: "Recent", value: stats.recent, icon: Clock, color: "emerald" }
+                { label: "Total Notes", value: stats.total, icon: BookOpen, color: "blue", filter: "all" as const },
+                { label: "Pinned", value: stats.pinned, icon: Star, color: "amber", filter: "favorites" as const },
+                { label: "AI Tags", value: stats.tags, icon: Sparkles, color: "purple", filter: "all" as const },
+                { label: "Recent", value: stats.recent, icon: Clock, color: "emerald", filter: "recent" as const }
               ].map((stat, i) => (
                 <motion.div
                   key={stat.label}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.1 }}
-                  className="bg-white rounded-3xl p-5 border border-zinc-200 shadow-sm hover:shadow-xl hover:scale-[1.02] transition-all dark:bg-zinc-900 dark:border-zinc-800 group"
+                  onClick={() => setActiveFilter(stat.filter)}
+                  className={cn(
+                    "bg-white rounded-3xl p-5 border border-zinc-200 shadow-sm hover:shadow-xl hover:scale-[1.02] transition-all cursor-pointer dark:bg-zinc-900 dark:border-zinc-800 group",
+                    activeFilter === stat.filter && stat.filter !== "all" && "ring-2 ring-indigo-500 ring-offset-2 dark:ring-offset-zinc-950"
+                  )}
                 >
                   <div className={cn(
                     "w-10 h-10 rounded-2xl flex items-center justify-center mb-4 transition-transform group-hover:rotate-12",
@@ -276,8 +319,14 @@ export default function Home() {
             </div>
           </div>
 
+          <div className="flex items-center justify-between mb-8">
+            <h3 className="text-xl font-bold capitalize">
+              {activeFilter === "dashboard" ? "All Notes" : `${activeFilter} Notes`}
+            </h3>
+          </div>
+
           <NoteList
-            notes={notes}
+            notes={filteredNotes}
             onDelete={handleDeleteNote}
             onPin={handlePinNote}
             onEdit={handleEditNote}
