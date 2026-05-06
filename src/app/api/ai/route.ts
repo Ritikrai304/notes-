@@ -9,36 +9,58 @@ export async function POST(req: Request) {
   }
 
   try {
-    const { content } = await req.json();
-    if (!content) {
-      return NextResponse.json({ error: "No content provided" }, { status: 400 });
+    const { content, image } = await req.json();
+    
+    if (!content && !image) {
+      return NextResponse.json({ error: "No content or image provided" }, { status: 400 });
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
     
-    // Switching to gemini-1.5-flash as it has a separate free tier quota
+    // Switching to gemini-1.5-flash as it supports vision and has a free tier
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-    const prompt = `
-      Analyze the following note content and provide:
-      1. A concise summary (max 2 sentences).
-      2. A list of 3-5 relevant tags.
+    let prompt = "";
+    let result;
 
-      Note content:
-      "${content}"
+    if (image) {
+      // Vision request
+      prompt = "Extract all text from this image clearly and accurately. If there are headings, preserve them. Just return the extracted text.";
+      const imageData = {
+        inlineData: {
+          data: image.split(",")[1], // Remove the data:image/png;base64, part
+          mimeType: "image/jpeg" // Default to jpeg, but ideally should match source
+        }
+      };
+      result = await model.generateContent([prompt, imageData]);
+    } else {
+      // Text processing request
+      prompt = `
+        Analyze the following note content and provide:
+        1. A concise summary (max 2 sentences).
+        2. A list of 3-5 relevant tags.
 
-      Respond strictly in JSON format:
-      {
-        "summary": "...",
-        "tags": ["tag1", "tag2", ...]
-      }
-    `;
+        Note content:
+        "${content}"
 
-    const result = await model.generateContent(prompt);
+        Respond strictly in JSON format:
+        {
+          "summary": "...",
+          "tags": ["tag1", "tag2", ...]
+        }
+      `;
+      result = await model.generateContent(prompt);
+    }
+
     const response = await result.response;
     const text = response.text();
+
+    if (image) {
+      // For image, we just return the extracted text
+      return NextResponse.json({ extractedText: text });
+    }
     
-    // Extract JSON from the response
+    // For text processing, we parse JSON
     let data;
     try {
       const jsonMatch = text.match(/\{[\s\S]*\}/);

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Note } from "@/types/note";
-import { X, Save, Sparkles, Loader2, Plus, Tag as TagIcon } from "lucide-react";
+import { X, Save, Sparkles, Loader2, Plus, Tag as TagIcon, Camera } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface NoteEditorProps {
@@ -10,6 +10,7 @@ interface NoteEditorProps {
   onSave: (note: Partial<Note>) => void;
   onClose: () => void;
   onGenerateAI: (content: string) => Promise<{ summary: string; tags: string[] }>;
+  onCaptureImage: (base64Image: string) => Promise<string>;
 }
 
 export default function NoteEditor({
@@ -17,12 +18,14 @@ export default function NoteEditor({
   onSave,
   onClose,
   onGenerateAI,
+  onCaptureImage,
 }: NoteEditorProps) {
   const [title, setTitle] = useState(note?.title || "");
   const [content, setContent] = useState(note?.content || "");
   const [tags, setTags] = useState<string[]>(note?.tags || []);
   const [newTag, setNewTag] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isCapturing, setIsCapturing] = useState(false);
 
   useEffect(() => {
     if (note) {
@@ -73,6 +76,35 @@ export default function NoteEditor({
     } finally {
       setIsGenerating(false);
     }
+  };
+
+  const handleCameraClick = () => {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "image/*";
+    input.capture = "environment";
+    input.onchange = async (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+
+      setIsCapturing(true);
+      const reader = new FileReader();
+      reader.onload = async () => {
+        try {
+          const base64Image = reader.result as string;
+          const extractedText = await onCaptureImage(base64Image);
+          if (extractedText) {
+            setContent((prev) => (prev ? `${prev}\n\n${extractedText}` : extractedText));
+          }
+        } catch (error) {
+          console.error("Failed to extract text:", error);
+        } finally {
+          setIsCapturing(false);
+        }
+      };
+      reader.readAsDataURL(file);
+    };
+    input.click();
   };
 
   return (
@@ -133,18 +165,33 @@ export default function NoteEditor({
         </div>
 
         <div className="flex items-center justify-between border-t border-zinc-100 p-4 dark:border-zinc-800">
-          <button
-            onClick={handleAI}
-            disabled={isGenerating || !content.trim()}
-            className="flex items-center gap-2 rounded-xl bg-indigo-50 px-4 py-2 text-sm font-semibold text-indigo-600 transition-colors hover:bg-indigo-100 disabled:opacity-50 dark:bg-indigo-950/30 dark:text-indigo-400"
-          >
-            {isGenerating ? (
-              <Loader2 size={18} className="animate-spin" />
-            ) : (
-              <Sparkles size={18} />
-            )}
-            AI Enhance
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={handleAI}
+              disabled={isGenerating || isCapturing || !content.trim()}
+              className="flex items-center gap-2 rounded-xl bg-indigo-50 px-4 py-2 text-sm font-semibold text-indigo-600 transition-colors hover:bg-indigo-100 disabled:opacity-50 dark:bg-indigo-950/30 dark:text-indigo-400"
+            >
+              {isGenerating ? (
+                <Loader2 size={18} className="animate-spin" />
+              ) : (
+                <Sparkles size={18} />
+              )}
+              AI Enhance
+            </button>
+
+            <button
+              onClick={handleCameraClick}
+              disabled={isCapturing || isGenerating}
+              className="flex items-center gap-2 rounded-xl bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-600 transition-colors hover:bg-emerald-100 disabled:opacity-50 dark:bg-emerald-950/30 dark:text-emerald-400"
+            >
+              {isCapturing ? (
+                <Loader2 size={18} className="animate-spin" />
+              ) : (
+                <Camera size={18} />
+              )}
+              Camera
+            </button>
+          </div>
 
           <div className="flex gap-3">
             <button

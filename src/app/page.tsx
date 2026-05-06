@@ -95,6 +95,28 @@ export default function Home() {
     }
   };
 
+  const captureImage = async (image: string) => {
+    try {
+      const response = await fetch("/api/ai", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ image }),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Vision failed to process the request");
+      }
+      
+      const data = await response.json();
+      return data.extractedText;
+    } catch (error: any) {
+      console.error("Vision Error:", error);
+      alert(`Vision Error: ${error.message}. Please check your API key and internet connection.`);
+      throw error;
+    }
+  };
+
   if (!isLoaded) return null;
 
   return (
@@ -130,6 +152,7 @@ export default function Home() {
           onClose={() => setIsEditorOpen(false)}
           onSave={handleSaveNote}
           onGenerateAI={generateAI}
+          onCaptureImage={captureImage}
         />
       )}
     </div>
