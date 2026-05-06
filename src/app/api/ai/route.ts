@@ -17,8 +17,8 @@ export async function POST(req: Request) {
 
     const genAI = new GoogleGenerativeAI(apiKey);
     
-    // Using gemini-2.0-flash as it's the most compatible for both text and vision
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+    // Using gemini-flash-latest as it's the most stable and available for this key
+    const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
 
     let prompt = "";
     let result;
