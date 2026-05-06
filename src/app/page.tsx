@@ -48,6 +48,12 @@ export default function Home() {
     }
   };
 
+  const handlePinNote = (id: string) => {
+    setNotes(
+      notes.map((n) => (n.id === id ? { ...n, isPinned: !n.isPinned } : n))
+    );
+  };
+
   const handleSaveNote = (noteData: Partial<Note>) => {
     if (editingNote) {
       // Update existing
@@ -141,6 +147,7 @@ export default function Home() {
         <NoteList
           notes={notes}
           onDelete={handleDeleteNote}
+          onPin={handlePinNote}
           onEdit={handleEditNote}
           onAdd={handleAddNote}
         />
