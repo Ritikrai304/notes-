@@ -33,6 +33,12 @@ export default function Home() {
     return (note.folder || "Uncategorized") === activeFilter;
   });
 
+  const handleFilterChange = (filter: string) => {
+    setActiveFilter(filter);
+    setIsSidebarOpen(false); // Mobile par sidebar close kar do
+    window.scrollTo({ top: 0, behavior: 'smooth' }); // Page ke upar scroll kar do
+  };
+
   // Load notes from localStorage on mount
   useEffect(() => {
     const saved = localStorage.getItem("ai-notes");
@@ -194,7 +200,7 @@ export default function Home() {
 
           <nav className="flex-1 space-y-2">
             <button 
-              onClick={() => setActiveFilter("dashboard")}
+              onClick={() => handleFilterChange("dashboard")}
               className={cn(
                 "flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm transition-all",
                 activeFilter === "dashboard" 
@@ -205,7 +211,7 @@ export default function Home() {
               <Layout size={20} /> Dashboard
             </button>
             <button 
-              onClick={() => setActiveFilter("all")}
+              onClick={() => handleFilterChange("all")}
               className={cn(
                 "flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm transition-all",
                 activeFilter === "all" 
@@ -216,7 +222,7 @@ export default function Home() {
               <BookOpen size={20} /> All Notes
             </button>
             <button 
-              onClick={() => setActiveFilter("favorites")}
+              onClick={() => handleFilterChange("favorites")}
               className={cn(
                 "flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm transition-all",
                 activeFilter === "favorites" 
@@ -227,7 +233,7 @@ export default function Home() {
               <Star size={20} /> Favorites
             </button>
             <button 
-              onClick={() => setActiveFilter("recent")}
+              onClick={() => handleFilterChange("recent")}
               className={cn(
                 "flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm transition-all",
                 activeFilter === "recent" 
@@ -245,7 +251,7 @@ export default function Home() {
                   {folders.map(folder => (
                     <button 
                       key={folder}
-                      onClick={() => setActiveFilter(folder)}
+                      onClick={() => handleFilterChange(folder)}
                       className={cn(
                         "flex w-full items-center gap-3 rounded-xl px-4 py-2 text-sm transition-all",
                         activeFilter === folder 
