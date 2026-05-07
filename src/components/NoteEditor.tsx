@@ -274,8 +274,8 @@ export default function NoteEditor({
           </div>
         </div>
 
-        <div className="flex items-center justify-between border-t border-zinc-100 p-4 dark:border-zinc-800">
-          <div className="flex items-center gap-2">
+        <div className="flex flex-col gap-4 border-t border-zinc-100 p-4 dark:border-zinc-800 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-wrap items-center gap-2">
             {/* Tools Dropdown */}
             <div className="relative">
               <button
@@ -331,7 +331,7 @@ export default function NoteEditor({
               </AnimatePresence>
             </div>
 
-            <div className="h-6 w-px bg-zinc-100 dark:bg-zinc-800 mx-1" />
+            <div className="h-6 w-px bg-zinc-100 dark:bg-zinc-800 mx-1 hidden sm:block" />
 
             <button
               onClick={toggleListening}
@@ -344,7 +344,8 @@ export default function NoteEditor({
               )}
             >
               {isListening ? <MicOff size={18} /> : <Mic size={18} />}
-              {isListening ? "Listening..." : "Voice"}
+              <span className="hidden xs:inline">{isListening ? "Listening..." : "Voice"}</span>
+              {!isListening && <span className="xs:hidden">Mic</span>}
             </button>
 
             <button
@@ -357,20 +358,21 @@ export default function NoteEditor({
               ) : (
                 <Download size={18} />
               )}
-              Export PDF
+              <span className="hidden xs:inline">Export PDF</span>
+              <span className="xs:hidden">PDF</span>
             </button>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 w-full sm:w-auto">
             <button
               onClick={onClose}
-              className="rounded-xl px-4 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
+              className="flex-1 rounded-xl px-4 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800 sm:flex-none"
             >
               Cancel
             </button>
             <button
               onClick={handleSave}
-              className="flex items-center gap-2 rounded-xl bg-zinc-900 px-6 py-2 text-sm font-semibold text-white transition-colors hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
+              className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-zinc-900 px-6 py-2 text-sm font-semibold text-white transition-colors hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200 sm:flex-none"
             >
               <Save size={18} />
               Save Note
