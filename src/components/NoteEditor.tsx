@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from "react";
 import { Note } from "@/types/note";
-import { X, Save, Sparkles, Loader2, Plus, Tag as TagIcon, Camera, Mic, MicOff, Download, FileText } from "lucide-react";
+import { X, Save, Sparkles, Loader2, Plus, Tag as TagIcon, Camera, Mic, MicOff, Download, FileText, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface NoteEditorProps {
   note: Note | null;
@@ -33,6 +34,7 @@ export default function NoteEditor({
   const [isListening, setIsListening] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [isUploadingPDF, setIsUploadingPDF] = useState(false);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   useEffect(() => {
     if (note) {
@@ -273,45 +275,63 @@ export default function NoteEditor({
         </div>
 
         <div className="flex items-center justify-between border-t border-zinc-100 p-4 dark:border-zinc-800">
-          <div className="flex gap-2">
-            <button
-              onClick={handleAI}
-              disabled={isGenerating || isCapturing || !content.trim()}
-              className="flex items-center gap-2 rounded-xl bg-indigo-50 px-4 py-2 text-sm font-semibold text-indigo-600 transition-colors hover:bg-indigo-100 disabled:opacity-50 dark:bg-indigo-950/30 dark:text-indigo-400"
-            >
-              {isGenerating ? (
-                <Loader2 size={18} className="animate-spin" />
-              ) : (
-                <Sparkles size={18} />
-              )}
-              AI Enhance
-            </button>
+          <div className="flex items-center gap-2">
+            {/* Tools Dropdown */}
+            <div className="relative">
+              <button
+                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                className="flex items-center gap-1 rounded-xl bg-zinc-100 px-3 py-2 text-sm font-semibold text-zinc-600 transition-colors hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700"
+              >
+                Tools
+                <ChevronDown size={16} className={cn("transition-transform", isDropdownOpen && "rotate-180")} />
+              </button>
 
-            <button
-              onClick={handleCameraClick}
-              disabled={isCapturing || isGenerating || isListening || isUploadingPDF}
-              className="flex items-center gap-2 rounded-xl bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-600 transition-colors hover:bg-emerald-100 disabled:opacity-50 dark:bg-emerald-950/30 dark:text-emerald-400"
-            >
-              {isCapturing ? (
-                <Loader2 size={18} className="animate-spin" />
-              ) : (
-                <Camera size={18} />
-              )}
-              Camera
-            </button>
+              <AnimatePresence>
+                {isDropdownOpen && (
+                  <>
+                    <div 
+                      className="fixed inset-0 z-10" 
+                      onClick={() => setIsDropdownOpen(false)} 
+                    />
+                    <motion.div
+                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: -8, scale: 1 }}
+                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                      className="absolute bottom-full left-0 z-20 mb-2 w-48 overflow-hidden rounded-2xl border border-zinc-100 bg-white p-2 shadow-xl dark:border-zinc-800 dark:bg-zinc-900"
+                    >
+                      <button
+                        onClick={() => { handleAI(); setIsDropdownOpen(false); }}
+                        disabled={isGenerating || isCapturing || !content.trim()}
+                        className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-indigo-600 transition-colors hover:bg-indigo-50 disabled:opacity-50 dark:text-indigo-400 dark:hover:bg-indigo-950/30"
+                      >
+                        {isGenerating ? <Loader2 size={18} className="animate-spin" /> : <Sparkles size={18} />}
+                        AI Enhance
+                      </button>
 
-            <button
-              onClick={handlePDFUpload}
-              disabled={isUploadingPDF || isGenerating || isListening || isCapturing}
-              className="flex items-center gap-2 rounded-xl bg-purple-50 px-4 py-2 text-sm font-semibold text-purple-600 transition-colors hover:bg-purple-100 disabled:opacity-50 dark:bg-purple-950/30 dark:text-purple-400"
-            >
-              {isUploadingPDF ? (
-                <Loader2 size={18} className="animate-spin" />
-              ) : (
-                <FileText size={18} />
-              )}
-              Upload PDF
-            </button>
+                      <button
+                        onClick={() => { handleCameraClick(); setIsDropdownOpen(false); }}
+                        disabled={isCapturing || isGenerating || isListening || isUploadingPDF}
+                        className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-emerald-600 transition-colors hover:bg-emerald-50 disabled:opacity-50 dark:text-emerald-400 dark:hover:bg-emerald-950/30"
+                      >
+                        {isCapturing ? <Loader2 size={18} className="animate-spin" /> : <Camera size={18} />}
+                        Camera
+                      </button>
+
+                      <button
+                        onClick={() => { handlePDFUpload(); setIsDropdownOpen(false); }}
+                        disabled={isUploadingPDF || isGenerating || isListening || isCapturing}
+                        className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-purple-600 transition-colors hover:bg-purple-50 disabled:opacity-50 dark:text-purple-400 dark:hover:bg-purple-950/30"
+                      >
+                        {isUploadingPDF ? <Loader2 size={18} className="animate-spin" /> : <FileText size={18} />}
+                        Upload PDF
+                      </button>
+                    </motion.div>
+                  </>
+                )}
+              </AnimatePresence>
+            </div>
+
+            <div className="h-6 w-px bg-zinc-100 dark:bg-zinc-800 mx-1" />
 
             <button
               onClick={toggleListening}
@@ -326,6 +346,7 @@ export default function NoteEditor({
               {isListening ? <MicOff size={18} /> : <Mic size={18} />}
               {isListening ? "Listening..." : "Voice"}
             </button>
+
             <button
               onClick={handleExportPDF}
               disabled={isExporting || !content.trim()}
@@ -340,7 +361,7 @@ export default function NoteEditor({
             </button>
           </div>
 
-          <div className="flex gap-3">
+          <div className="flex items-center gap-3">
             <button
               onClick={onClose}
               className="rounded-xl px-4 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
