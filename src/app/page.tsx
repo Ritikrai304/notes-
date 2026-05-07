@@ -5,7 +5,7 @@ import { Note } from "@/types/note";
 import { cn } from "@/lib/utils";
 import NoteList from "@/components/NoteList";
 import NoteEditor from "@/components/NoteEditor";
-import { Plus, Sparkles, Layout, Clock, Star, Settings, User, LogOut, Menu, X, BookOpen, BrainCircuit } from "lucide-react";
+import { Plus, Sparkles, Layout, Clock, Star, Settings, User, LogOut, Menu, X, BookOpen, BrainCircuit, Folder } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function Home() {
@@ -14,7 +14,7 @@ export default function Home() {
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
-  const [activeFilter, setActiveFilter] = useState<"all" | "favorites" | "recent" | "dashboard">("dashboard");
+  const [activeFilter, setActiveFilter] = useState<"all" | "favorites" | "recent" | "dashboard" | string>("dashboard");
 
   const stats = {
     total: notes.length,
@@ -23,10 +23,14 @@ export default function Home() {
     recent: notes.filter(n => (Date.now() - n.updatedAt) < 86400000).length
   };
 
+  const folders = Array.from(new Set(notes.map(n => n.folder || "Uncategorized"))).sort();
+
   const filteredNotes = notes.filter(note => {
     if (activeFilter === "favorites") return note.isPinned;
     if (activeFilter === "recent") return (Date.now() - note.updatedAt) < 86400000;
-    return true; // "all" or "dashboard" shows all notes
+    if (["all", "dashboard"].includes(activeFilter)) return true;
+    // If filter is a folder name
+    return (note.folder || "Uncategorized") === activeFilter;
   });
 
   // Load notes from localStorage on mount
@@ -88,6 +92,7 @@ export default function Home() {
         title: noteData.title || "Untitled",
         content: noteData.content || "",
         tags: noteData.tags || [],
+        folder: noteData.folder || "Uncategorized",
         summary: noteData.summary,
         createdAt: Date.now(),
         updatedAt: Date.now(),
@@ -232,6 +237,28 @@ export default function Home() {
             >
               <Clock size={20} /> Recent
             </button>
+
+            {folders.length > 0 && (
+              <div className="pt-4 mt-4 border-t border-zinc-100 dark:border-zinc-800">
+                <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest px-4 mb-2">Folders</p>
+                <div className="space-y-1">
+                  {folders.map(folder => (
+                    <button 
+                      key={folder}
+                      onClick={() => setActiveFilter(folder)}
+                      className={cn(
+                        "flex w-full items-center gap-3 rounded-xl px-4 py-2 text-sm transition-all",
+                        activeFilter === folder 
+                          ? "bg-indigo-50 font-bold text-indigo-600 dark:bg-indigo-950/30 dark:text-indigo-400" 
+                          : "font-semibold text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                      )}
+                    >
+                      <Folder size={18} /> {folder}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </nav>
 
           <div className="mt-auto pt-6 space-y-4">

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Note } from "@/types/note";
-import { X, Save, Sparkles, Loader2, Plus, Tag as TagIcon, Camera, Mic, MicOff, Download, FileText, ChevronDown } from "lucide-react";
+import { X, Save, Sparkles, Loader2, Plus, Tag as TagIcon, Camera, Mic, MicOff, Download, FileText, ChevronDown, Folder } from "lucide-react";
 import { cn } from "@/lib/utils";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
@@ -12,7 +12,7 @@ interface NoteEditorProps {
   note: Note | null;
   onSave: (note: Partial<Note>) => void;
   onClose: () => void;
-  onGenerateAI: (content: string) => Promise<{ summary: string; tags: string[] }>;
+  onGenerateAI: (content: string) => Promise<{ summary: string; tags: string[]; folder?: string }>;
   onCaptureImage: (base64Image: string) => Promise<string>;
   onUploadPDF: (base64PDF: string) => Promise<string>;
 }
@@ -28,6 +28,7 @@ export default function NoteEditor({
   const [title, setTitle] = useState(note?.title || "");
   const [content, setContent] = useState(note?.content || "");
   const [tags, setTags] = useState<string[]>(note?.tags || []);
+  const [folder, setFolder] = useState(note?.folder || "Uncategorized");
   const [newTag, setNewTag] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [isCapturing, setIsCapturing] = useState(false);
@@ -41,10 +42,12 @@ export default function NoteEditor({
       setTitle(note.title);
       setContent(note.content);
       setTags(note.tags);
+      setFolder(note.folder || "Uncategorized");
     } else {
       setTitle("");
       setContent("");
       setTags([]);
+      setFolder("Uncategorized");
     }
   }, [note]);
 
@@ -53,6 +56,7 @@ export default function NoteEditor({
       title,
       content,
       tags,
+      folder,
     });
   };
 
@@ -74,11 +78,16 @@ export default function NoteEditor({
     setIsGenerating(true);
     try {
       const result = await onGenerateAI(content);
+      setTitle(prev => prev || result.summary.split(".")[0]); // Set title if empty
+      setTags([...new Set([...tags, ...result.tags])]);
+      if (result.folder) setFolder(result.folder);
+      
       onSave({
-        title,
+        title: title || result.summary.split(".")[0],
         content,
         tags: [...new Set([...tags, ...result.tags])],
         summary: result.summary,
+        folder: result.folder || folder,
       });
     } catch (error) {
       console.error("AI generation failed:", error);
@@ -240,28 +249,43 @@ export default function NoteEditor({
               className="w-full bg-transparent text-3xl font-bold text-zinc-900 outline-none placeholder:text-zinc-300 dark:text-zinc-100"
             />
 
-            <div className="flex flex-wrap gap-2">
-              {tags.map((tag) => (
-                <span
-                  key={tag}
-                  className="flex items-center gap-1 rounded-full bg-zinc-100 px-3 py-1 text-sm font-medium text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
+            <div className="flex flex-wrap items-center gap-4">
+              <div className="flex items-center gap-2 rounded-xl bg-zinc-50 px-3 py-1.5 dark:bg-zinc-800/50">
+                <Folder size={16} className="text-zinc-400" />
+                <select
+                  value={folder}
+                  onChange={(e) => setFolder(e.target.value)}
+                  className="bg-transparent text-sm font-semibold text-zinc-600 outline-none dark:text-zinc-400"
                 >
-                  {tag}
-                  <button onClick={() => removeTag(tag)}>
-                    <X size={14} />
-                  </button>
-                </span>
-              ))}
-              <div className="flex items-center gap-2 rounded-full border border-dashed border-zinc-300 px-3 py-1 dark:border-zinc-700">
-                <TagIcon size={14} className="text-zinc-400" />
-                <input
-                  type="text"
-                  placeholder="Add tag..."
-                  value={newTag}
-                  onChange={(e) => setNewTag(e.target.value)}
-                  onKeyDown={handleAddTag}
-                  className="w-20 bg-transparent text-sm outline-none"
-                />
+                  {["Uncategorized", "Personal", "Work", "Study", "Finance", "Health", "Ideas"].map(f => (
+                    <option key={f} value={f}>{f}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                {tags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="flex items-center gap-1 rounded-full bg-zinc-100 px-3 py-1 text-sm font-medium text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
+                  >
+                    {tag}
+                    <button onClick={() => removeTag(tag)}>
+                      <X size={14} />
+                    </button>
+                  </span>
+                ))}
+                <div className="flex items-center gap-2 rounded-full border border-dashed border-zinc-300 px-3 py-1 dark:border-zinc-700">
+                  <TagIcon size={14} className="text-zinc-400" />
+                  <input
+                    type="text"
+                    placeholder="Add tag..."
+                    value={newTag}
+                    onChange={(e) => setNewTag(e.target.value)}
+                    onKeyDown={handleAddTag}
+                    className="w-20 bg-transparent text-sm outline-none"
+                  />
+                </div>
               </div>
             </div>
 

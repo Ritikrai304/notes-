@@ -49,6 +49,7 @@ export async function POST(req: Request) {
         Analyze the following note content and provide:
         1. A concise summary (max 2 sentences).
         2. A list of 3-5 relevant tags.
+        3. A suitable folder name (choose from: Personal, Work, Study, Finance, Health, or Ideas).
 
         Note content:
         "${content}"
@@ -56,7 +57,8 @@ export async function POST(req: Request) {
         Respond strictly in JSON format:
         {
           "summary": "...",
-          "tags": ["tag1", "tag2", ...]
+          "tags": ["tag1", "tag2", ...],
+          "folder": "..."
         }
       `;
       result = await model.generateContent(prompt);
